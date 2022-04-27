@@ -16,11 +16,13 @@
 
 #endif
 #include "droidsansfont.h"
+#define IG ImGui
 
 struct HermesAppInternal {
     bool m_initialized = false;
     ImFont *m_font = nullptr;
     ImGuiIO* m_imgui_io = nullptr;
+    bool m_show_setup_window = false;
     SDL_GLContext m_sdl_gl_context = nullptr;
     const int m_mail_list_spacing = 126;
     SDL_Window* m_window;
@@ -106,7 +108,7 @@ void init() {
     font_cfg.SizePixels = 22.0f;
     g_data.m_font = g_data.m_imgui_io->Fonts->AddFontFromMemoryCompressedBase85TTF(
             DroidSansFont_compressed_data_base85,
-            24
+            28
     );
     IM_ASSERT(g_data.m_font != NULL);
 
@@ -142,17 +144,21 @@ void draw_widgets() {
     const auto content_viewer_id = 3;
     static bool show_setup_dialog = true;
     ImGui::PushFont(g_data.m_font);
-    ImVec2 button_size(ImGui::GetContentRegionAvail().x*0.33,56);
     ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
     //ImGui::SetNextWindowSize(ImVec2(200, ImGui::GetWindowHeight()));
     //ImGui::SetNextWindowDockID(0);
-    //ImGui::SameLine(0,0);
-    ImGui::SetNextWindowPos(ImVec2(0,0));
-    ImGui::BeginTable("main_layout_table", 3,
-                      ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_Resizable
-                      | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV, ImGui::GetWindowSize());
+//    ImGui::SameLine(0,0);
+    ImGui::SetNextWindowPos(ImVec2(-32,-32));
+//    IG::Spacing();
+//    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(32,32));
+ImVec2 window_size = IG::GetWindowSize();
+window_size.x -= 36;
+window_size.y -= 64;
+ImGui::BeginTable("main_layout_table", 3,
+                      ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable
+                      , window_size);
     //start of main_layout_table
-    ImGui::TableNextRow(ImGuiTableFlags_ScrollY, ImGui::GetWindowHeight());
+    ImGui::TableNextRow(ImGuiTableFlags_ScrollY, window_size.y);
     ImGui::TableSetColumnIndex(0);
 //    ImGui::BeginChildFrame(main_side_panel_id,ImVec2(ImGui::GetContentRegionAvail().x*0.33, ImGui::GetWindowHeight())
 //                           ImGuiWindowFlags_NoTitleBar);
@@ -187,6 +193,7 @@ void draw_widgets() {
     ImGui::PopFont();
     //end of main_layout_table
     ImGui::EndTable();
+//    ImGui::PopStyleVar();
 }
 
 void update_frame() {
@@ -199,7 +206,9 @@ void update_frame() {
     ImGui::Begin("Hermes", nullptr,
                  ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize);
 //        ImGui::SetWindowFontScale(3);
-    draw_widgets();
+    IG::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16,16));
+    if (!g_data.m_show_setup_window) { draw_widgets(); }
+    IG::PopStyleVar();
     ImGui::End();
 
     // Rendering
