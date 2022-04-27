@@ -1,0 +1,3 @@
+/home/ben/Documents/projects/hermes/linux/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/ben/Documents/projects/hermes/linux/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/ben/Documents/projects/hermes/linux/cmake-build-debug/CMakeFiles/hermes.dir
