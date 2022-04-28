@@ -9,6 +9,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
             ${IMGUI_DIR}
             ${IMGUI_DIR}/backends)
 endif()
+include_directories(../common/include)
 add_executable(hermes
         main.cpp
         ${IMGUI_DIR}/imgui.cpp

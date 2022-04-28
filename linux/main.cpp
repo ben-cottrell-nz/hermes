@@ -8,27 +8,79 @@
 #include "imgui_impl_opengl3.h"
 #include <cstdio>
 #include <SDL.h>
+#include "json.hpp"
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <SDL_opengles2.h>
 #else
 #include <SDL_opengl.h>
 #include <imgui_internal.h>
+#include <fstream>
 
 #endif
 #include "droidsansfont.h"
 #define IG ImGui
 
-struct HermesAppInternal {
-    bool m_initialized = false;
-    ImFont *m_font = nullptr;
-    ImGuiIO* m_imgui_io = nullptr;
-    bool m_show_setup_window = false;
-    SDL_GLContext m_sdl_gl_context = nullptr;
-    const int m_mail_list_spacing = 126;
-    SDL_Window* m_window;
-};
+namespace HermesInternal {
+    using std::string;
+    using nlohmann::json;
+    struct AppData {
+        bool m_initialized = false;
+        ImFont *m_font = nullptr;
+        ImGuiIO *m_imgui_io = nullptr;
+        bool m_show_setup_window = false;
+        SDL_GLContext m_sdl_gl_context = nullptr;
+        const int m_mail_list_spacing = 126;
+        SDL_Window *m_window;
+    };
 
-static HermesAppInternal g_data {};
+    struct MailAccount {
+        string m_alias;
+        std::unordered_map<string, string> m_settings;
+    };
+
+    struct AppConfigSerializable {
+        std::vector<MailAccount> m_mail_accounts;
+        json m_json_data;
+        void load_from_file(const char* path) {
+            std::ifstream file_reader(path);
+//            string file_text;
+//            string text;
+//            while (file_reader.good()) {
+//                std::getline(file_reader, text);
+//                file_text += text;
+//            }
+            m_json_data = file_text;
+        }
+    };
+    //various type conversion functions called by json constructor
+    //for to_json functions, and get for from_json functions
+    //MailAccount
+    void to_json(json& j, MailAccount& m) {
+        j["alias"] = m.m_alias;
+        j["settings"] = m.m_settings;
+    }
+    void from_json(json& j, MailAccount& m) {
+        j.at("alias").get_to(m.m_alias);
+        j.at("settings").get_to(m.m_settings);
+    }
+    //AppConfig
+    void from_json(json& j, std::vector<MailAccount>& m) {
+
+    }
+    void to_json(json& j, std::vector<MailAccount>& m) {
+
+    }
+}
+
+static HermesInternal::AppData g_data {};
+
+void load_config() {
+
+}
+
+void save_config() {
+
+}
 
 //initialize g_data
 void init() {
@@ -40,6 +92,7 @@ void init() {
         printf("Error: %s\n", SDL_GetError());
         exit(-1);
     }
+    //g_data.m_show_setup_window = true;
 
     // Decide GL+GLSL versions
 #if defined(IMGUI_IMPL_OPENGL_ES2)
