@@ -38,20 +38,6 @@ namespace HermesInternal {
         std::unordered_map<string, string> m_settings;
     };
 
-    struct AppConfigSerializable {
-        std::vector<MailAccount> m_mail_accounts;
-        json m_json_data;
-        void load_from_file(const char* path) {
-            std::ifstream file_reader(path);
-//            string file_text;
-//            string text;
-//            while (file_reader.good()) {
-//                std::getline(file_reader, text);
-//                file_text += text;
-//            }
-            m_json_data = file_text;
-        }
-    };
     //various type conversion functions called by json constructor
     //for to_json functions, and get for from_json functions
     //MailAccount
@@ -63,16 +49,46 @@ namespace HermesInternal {
         j.at("alias").get_to(m.m_alias);
         j.at("settings").get_to(m.m_settings);
     }
-    //AppConfig
-    void from_json(json& j, std::vector<MailAccount>& m) {
 
-    }
-    void to_json(json& j, std::vector<MailAccount>& m) {
+    struct AppConfigSerializable {
+        std::vector<MailAccount> m_mail_accounts;
+        json m_json_data;
+        void load_config_file() {
+            using namespace std;
+            const char* path = "./config.json";
+            fstream fs;
+            if (!filesystem::exists(path)) {
+                fs.open(path, ios::in | ios::out | ios::trunc);
+                if (fs.is_open()) {
+                    m_json_data = R"(
+{
+    "mail-accounts" : [{"alias":"default","account-settings":[]}]
+}
+)"_json;
+                    fs << m_json_data;
+                    fs.flush();
+                }
+            } else {
+                fs.open(path, ios::in);
+            }
+            if (fs.is_open()) {
+                fs >> m_json_data;
+                json::array_t json_accounts_array = m_json_data["mail-accounts"];
+                for (size_t i = 0; i < json_accounts_array.size(); i++) {
+                    json v = json_accounts_array[i];
+                    MailAccount m;
+                    m.m_alias = v["alias"];
+                    m.m_settings = v["account-settings"];
+                    m_mail_accounts.push_back(move(m));
+                }
+            }
+        }
+    };
 
-    }
 }
 
 static HermesInternal::AppData g_data {};
+static HermesInternal::AppConfigSerializable g_app_config {};
 
 void load_config() {
 
@@ -117,7 +133,6 @@ void init() {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 #endif
-
     // Create window with graphics context
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
@@ -169,6 +184,7 @@ void init() {
     ImGui::GetStyle().ScaleAllSizes(3.0f);
 
     g_data.m_initialized = true;
+    g_app_config.load_config_file();
 }
 
 void draw_mailbox_entry() {
